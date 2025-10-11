@@ -1,0 +1,275 @@
+Neighborhood Micro-Events Finder — Detailed Prompt (sample city: Charlotte)
+Short description
+
+Build Neighborhood Micro-Events Finder, a service that discovers, verifies, and surfaces short, local, community-focused events in Charlotte (block parties, pop-up markets, porch concerts, garage sales, neighborhood cleanups, kids’ storytimes at independent libraries, church bazaars, etc.). The system must automatically discover events across public sources (city calendars, local news & archives, community groups), verify each event using credible resources, assign a confidence score, preserve provenance, and surface events in a privacy-preserving, equitable, accessible way for residents.
+
+High-level goals
+
+Discover micro-events that are often under-represented by large listings (hyperlocal, community-run).
+
+Verify events via credible sources and archival records to minimize misinformation and spam.
+
+Provenance & transparency — show users where event data came from and the confidence level.
+
+Privacy & consent — avoid exposing personal contact info without consent; respect vulnerable populations.
+
+Local value — support neighbors, small organizations, and civic engagement without amplifying harmful or illegal activity.
+
+Extensible — design so other cities beyond Charlotte can be added.
+
+Primary users & use cases
+
+Residents looking for neighborhood happenings within a 1–5 mile radius.
+
+Community organizers wanting cheap, accurate visibility.
+
+Local journalists or librarians verifying grassroots events.
+
+City staff monitoring civic activation (optional admin use).
+
+User stories:
+
+“As a Charlotte resident, I want to see tomorrow’s free neighborhood events within 2 miles so I can bring my family.”
+
+“As a block captain, I want to post and verify my cleanup event so neighbors trust it’s legitimate.”
+
+“As a volunteer, I want to subscribe to alerts for kid-friendly events near Plaza Midwood.”
+
+Data discovery & sources (recommended)
+
+Priority order for verification and reliability:
+
+Official / City sources
+
+City of Charlotte events calendar, neighborhood services pages, permits/park reservation pages.
+
+Local government / institutions
+
+County library branches (Charlotte Mecklenburg Library), neighborhood associations, community centers, public schools.
+
+Local media & archives
+
+Charlotte Observer, local community blogs, hyperlocal newsletters, library archives.
+
+Community platforms & groups
+
+Nextdoor (public posts only), Meetup (community groups), Eventbrite (small events), Facebook Events (public), local church or HOA websites.
+
+Nonprofits & volunteer orgs
+
+Local environmental orgs, foodbanks, neighborhood volunteer groups.
+
+User submissions
+
+Verified organizer submissions through an account / verification flow.
+
+Do not scrape private gated content or private DMs. Prefer published public pages, RSS, or APIs where available.
+
+Verification pipeline (core logic)
+
+Crawl & ingest: collect events using polite scraping (robots.txt), RSS, public APIs, or manual entry forms.
+
+Canonicalize: normalize fields (title, start/end datetime with timezone, location name + geocoordinates, organizer, description, tags).
+
+Initial credibility checks:
+
+Does the source have an organizational email/contact/address? (city/organization > news > meetup > personal blog)
+
+Is the event attached to an existing organization (library, park) that has a stable website or permit record?
+
+Cross-source corroboration:
+
+If the event appears on 2+ credible sources OR appears on one high-credibility source (city, library, major news), mark as verified.
+
+If only one low-credibility source (personal blog, single Facebook post) — flag as unverified and schedule for human review.
+
+Archive check:
+
+For recurring or suspicious events, check local archives (old posts, city permit history) to confirm legitimacy and recurrence.
+
+Human moderation:
+
+Events with low confidence, high risk (large gathering, political/health-sensitive), or flagged by users are routed to moderators.
+
+Confidence scoring:
+
+Compute score (0–100) based on source reliability, corroboration count, presence of permit/venue listing, organizer verification.
+
+Safety checks:
+
+Block or flag events that promote illegal activity, hate content, or are solicitations. Follow content policy and local law.
+
+Provenance storage:
+
+Store and display up to N (e.g., 5) source citations and snapshots (permanent link or cached copy) to support transparency.
+
+Ethical & privacy considerations
+
+Consent & personal data: Do not extract or display personal phone numbers or private email addresses scraped from public pages unless the organizer explicitly consents via a submission form. Prefer organization-level contact info.
+
+Do no harm: Avoid amplifying events that could put vulnerable people at risk (private protests that could endanger participants, doxxing, etc.). Provide a human escalation path.
+
+Bias & representation: Ensure outreach and discovery algorithms do not favor wealthy neighborhoods (more web presence) over lower-resource areas. Implement sampling and outreach to local libraries, churches, and community centers to surface their events.
+
+Transparency: Show confidence score and the sources used. Allow users to flag incorrect events and see status of appeals.
+
+Data retention & right to be forgotten: Allow organizers to request removal of their event and personal contact details. Respect takedown requests.
+
+Accessibility: Ensure UI is accessible (WCAG 2.1 AA), multilingual options (English + Spanish commonly used in Charlotte), and that notifications are opt-in.
+
+Legal: Respect copyright when archiving snippets. Follow robots.txt and Terms of Service of scraped sites; prefer public APIs and RSS.
+
+Functionality & features (MVP -> v2)
+
+MVP
+
+Web & mobile responsive UI
+
+Map + chronological feed for micro-events within a user’s radius
+
+Filters: date range, free/paid, family-friendly, outdoor/indoor, neighborhood
+
+Event detail page with provenance links and confidence score
+
+Organizer submission form with simple verification (email + optional ID/org link)
+
+Basic admin moderation dashboard & manual verification panel
+
+Push/email subscription by neighborhood and interest
+
+Simple analytics: number of events, verified rate
+
+v1 / nice-to-have
+
+Geo-fenced push notifications (e.g., event under 1 mile starts in 2 hours)
+
+Calendar export (iCal) & social share
+
+Organizer dashboard for edits and analytics (views & RSVP)
+
+Automated outreach to underrepresented neighborhoods to solicit events
+
+Sentiment & spam detection model
+
+Machine learning ranking to surface high-value neighborhood events
+
+Integration with city APIs for permit lookup (if available)
+
+Data model (example)
+
+Event object (JSON):
+
+{
+  "id": "charlotte-evt-20251015-001",
+  "title": "Freedom Park Porch Concert",
+  "description": "Neighborhood porch concert with local acoustic artists. BYO chair.",
+  "start_datetime": "2025-10-15T18:00:00-04:00",
+  "end_datetime": "2025-10-15T20:00:00-04:00",
+  "timezone": "America/New_York",
+  "location": {
+    "name": "Freedom Park - West Lawn",
+    "address": "1900 East Blvd, Charlotte, NC",
+    "lat": 35.2042,
+    "lng": -80.8426
+  },
+  "organizer": {
+    "name": "Friends of Freedom Park",
+    "website": "https://friendsoffreedompark.org",
+    "contact_public": false
+  },
+  "tags": ["music", "family", "free", "outdoor"],
+  "sources": [
+    {"type":"city_calendar","url":"https://charlottenc.gov/events/..."},
+    {"type":"local-news","url":"https://charlotteobserver.com/..."}
+  ],
+  "confidence": 92,
+  "verification_status": "verified",
+  "created_at": "2025-10-01T12:00:00-04:00",
+  "last_checked_at": "2025-10-10T09:00:00-04:00"
+}
+
+Sample AI agent prompt (for scraping + verification agent)
+
+Use this as a system/instruction prompt for an automated agent that finds & verifies events in Charlotte:
+
+You are the Neighborhood Micro-Events Finder agent focused on Charlotte, NC. Your task: discover hyperlocal events, extract canonical event fields, verify each event with credible sources, compute a confidence score (0–100), and provide provenance. Follow rules:
+
+Only use public, crawlable pages, RSS feeds, or public APIs. Respect robots.txt and site TOS.
+
+Normalize datetimes to America/New_York. If time is ambiguous, mark as "time uncertain" and reduce confidence.
+
+Cross-confirm: if an event appears on ≥2 credible sources OR on 1 high-credibility source (city, library, major local paper), mark as verified.
+
+Look for permits, venue reservation pages, library event pages, or organizational domains to increase confidence.
+
+Do not extract personal phone numbers or private email addresses. Capture only organization-level contact unless organizer submits via our form with consent.
+
+For each event, return: id, title, description (50–300 chars), start/end datetime, timezone, location (name/address/lat/lng), tags (3 max), organizer (name/website/contact_public flag), sources (list), confidence (0–100), verification_status (verified/unverified/flagged), last_checked_at, notes (why confidence level).
+
+For events flagged as low confidence or high risk, add them to a human moderation queue and explain why.
+
+Provide a short human-readable provenance summary (1–2 sentences).
+
+Log a cached snapshot URL (HTML or PDF) of the primary source for audit.
+
+UI/UX recommendations
+
+Homepage: map + list view toggle. Default radius 2 miles from user (allow 1–10 mi).
+
+Event card: title, time, distance, tags, confidence badge (color & number), compact source icons (city/newspaper/library).
+
+Event detail: full description, directions, provenance section with source links and cached snapshot, “Report problem” and “Suggest edit” CTA.
+
+Filters: free/paid, kids, accessibility features, recurring, verified only.
+
+Organizers: lightweight verification flow (email + one proof link). Verified organizers get a “Verified Organizer” badge which increases trust.
+
+Notifications: opt-in neighborhood digest (daily/weekly), event reminders, last-minute alerts. Allow snooze and quiet hours.
+
+Moderation UI: queue sorted by confidence & risk, with quick actions (verify, flag, request more info, remove).
+
+Moderation & appeals
+
+Users can flag events — provide reason categories: outdated, spam, incorrect location, safety risk.
+
+Organizers can appeal removals via a web form. Maintain an audit trail for each action.
+
+Metrics & success criteria
+
+Coverage: % of Charlotte neighborhoods with at least one verified event per week.
+
+Verification rate: ratio of verified to discovered events (target 60%+ for MVP).
+
+False positive rate: % of events removed after user reports or moderator review.
+
+User satisfaction: NPS or 1–5 rating for event accuracy.
+
+Time to verify: median time between discovery and verification (lower is better).
+
+Equity metric: distribution of events surfaced across ZIP codes (aim for balanced representation, not just high-web-presence areas).
+
+Legal, ops & technical constraints
+
+Follow robots.txt; implement rate limiting and polite crawl behavior.
+
+Cache snapshots & source URLs for auditability.
+
+GDPR/CCPA: allow users and organizers to request deletion of personal data.
+
+Data storage: retain event provenance and moderation logs for X months (decide policy), ensure backups and encryption at rest.
+
+Security: protect moderator/admin interfaces with 2FA.
+
+Example acceptance tests
+
+Ingest an event from Charlotte Mecklenburg Library page → event stored with confidence ≥90 and verification_status == verified if library page lists it.
+
+Ingest a Facebook public event + single personal blog post listing → event stored with confidence <60 and verification_status == unverified; appears in moderation queue.
+
+Organizer submits event via form with org website + verification → event marked verified and shows organizer contact_public true.
+
+User flags an event as "incorrect location" → event enters review; moderator edit updates location and last_checked_at.
+
+Sample prompt you can give to a developer or LLM (copy/paste-ready)
+
+Design and implement a Neighborhood Micro-Events Finder MVP for Charlotte. Features: automatic discovery (RSS/APIs/polite scraping), normalization, cross-source verification, confidence scoring, provenance display, organizer submission flow, map + feed UI, and moderation dashboard. Prioritize privacy (no scraping/displaying personal contact info), accessibility (WCAG 2.1 AA), and equitable discovery across neighborhoods. Provide a technical design document covering the discovery pipeline, data model, API endpoints, moderation workflow, and an initial list of public Charlotte sources (city calendar, Charlotte Mecklenburg Library, Charlotte Observer, neighborhood associations, Meetup/Eventbrite public feeds). Provide an implementation plan (MVP milestones), tests, and metrics listed above.
